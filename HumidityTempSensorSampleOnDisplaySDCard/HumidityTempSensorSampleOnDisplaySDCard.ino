@@ -1,5 +1,12 @@
 #include <dht.h>
 #include "U8glib.h"
+#include <SD.h>
+#include <SPI.h>
+// Got SD code from here https://howtomechatronics.com/tutorials/arduino/arduino-sd-card-data-logging-excel-tutorial
+File myFile;
+
+int pinCS = 53;
+
 float tem = 0;
 float hum = 0;
 
@@ -25,6 +32,20 @@ void draw() {
 }
 void setup(){
   Serial.begin(9600);
+  pinMode(pinCS,OUTPUT);
+
+// SD Card Use
+  if (SD.begin())
+  {
+    Serial.println("SD card is ready to use.");
+  } else
+  {
+    Serial.println("SD card initialization failed");
+    return;
+  }
+//  DHT.begin();    //Starts the DHT sensor
+
+  //Setup for the Display
  if ( u8g.getMode() == U8G_MODE_R3G3B2 ) {
     u8g.setColorIndex(255);     // white
   }
@@ -41,13 +62,30 @@ void setup(){
 
 void loop()
 {
-  int chk = DHT.read11(DHT11_PIN);
+  float chk = DHT.read11(DHT11_PIN);
   tem = DHT.temperature*9/5 + 32;//Set as C, I converted it to F
   hum = DHT.humidity;
-  Serial.print("Temperature = ");
+  /*Serial.print("Temperature = ");
   Serial.println(tem);
   Serial.print("Humidity = ");
+  Serial.println(hum);*/
+  Serial.print(tem);
+  Serial.print(",");
   Serial.println(hum);
+  //Serial.print(",");
+
+  myFile = SD.open("test.txt", FILE_WRITE);
+  if(myFile){
+    myFile.print(tem);
+    myFile.print(",");
+    myFile.println(hum);
+    //myFile.print(",");
+    myFile.close();
+  }
+
+  else{
+    Serial.println("error opening test.txt");
+  }
   
   
   // picture loop
@@ -57,6 +95,6 @@ void loop()
       } while( u8g.nextPage() );
    
    // rebuild the picture after some delay
-  delay(2000);
+  delay(3000);
 }
  
